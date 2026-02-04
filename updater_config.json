@@ -1,0 +1,74 @@
+{
+  "trash_config": {
+    "trash_path": ".trash",
+    "append_tag": true,
+    "append_date": false
+  },
+  "apps": [
+    {
+      "name": "Variable Asset App (regex pattern)",
+      "repo": "mockorg/variable-asset-app",
+      "tag": "v3.2.0",
+      "asset_pattern": "^variable-asset-app-.*\\.zip$",
+      "asset_match_type": "regex",
+      "install_path": "./test-downloads/variable-asset-app.zip",
+      "use_prerelease": false,
+      "post_download_hook": "./hooks/test_hook.sh",
+      "post_download_hook_args": ["--arg1", "--arg2"]
+    },
+    {
+      "name": "Variable Asset App Beta (prerelease)",
+      "repo": "mockorg/variable-asset-app",
+      "tag": "v3.2.1",
+      "asset_pattern": "^variable-asset-app-.*\\.zip$",
+      "asset_match_type": "regex",
+      "install_path": "./test-downloads/variable-asset-app-beta.zip",
+      "use_prerelease": true
+    },
+    {
+      "name": "Test App Linux (regex)",
+      "repo": "test-owner/test-app",
+      "tag": "v1.4.0",
+      "asset_pattern": "^test-app-v[0-9.]+\\-linux\\.tar\\.gz$",
+      "asset_match_type": "regex",
+      "install_path": "./test-downloads/test-app-linux.tar.gz",
+      "use_prerelease": false
+    },
+    {
+      "name": "Test App Windows (regex)",
+      "repo": "test-owner/test-app",
+      "tag": "v1.4.0",
+      "asset_pattern": "^test-app-.*-windows\\.exe$",
+      "asset_match_type": "regex",
+      "install_path": "./test-downloads/test-app-windows.exe",
+      "use_prerelease": false
+    },
+    {
+      "name": "Fixed Name App (fixed)",
+      "repo": "another-owner/fixed-name-app",
+      "tag": "v3.2.0",
+      "asset_pattern": "app-release.zip",
+      "asset_match_type": "fixed",
+      "install_path": "./test-downloads/app-release.zip",
+      "use_prerelease": false
+    },
+    {
+      "name": "Tag Template App Linux (tag substitution)",
+      "repo": "mockorg/tag-template-app",
+      "tag": "v2.2.5",
+      "asset_pattern": "template-app-{tag}-linux.tar.gz",
+      "asset_match_type": "tag",
+      "install_path": "./test-downloads/template-app-linux.tar.gz",
+      "use_prerelease": false
+    },
+    {
+      "name": "Tag Template App Windows (tag substitution)",
+      "repo": "mockorg/tag-template-app",
+      "tag": "v2.2.5",
+      "asset_pattern": "template-app-{tag}-windows.exe",
+      "asset_match_type": "tag",
+      "install_path": "./test-downloads/template-app-windows.exe",
+      "use_prerelease": false
+    }
+  ]
+}
