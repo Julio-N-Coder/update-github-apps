@@ -61,11 +61,17 @@ case "$ARCHIVE_LC" in
 	;;
 *.7z)
 	require_cmd 7z
-	7z x -y -o"$DEST_DIR" "$ARCHIVE_PATH" >/dev/null
+	7z x -y -o"$DEST_DIR" "$ARCHIVE_PATH"
 	;;
 *.rar)
-	require_cmd unrar
-	unrar x -o+ "$ARCHIVE_PATH" "$DEST_DIR" >/dev/null
+	if command -v unrar >/dev/null 2>&1; then
+		unrar x -o+ "$ARCHIVE_PATH" "$DEST_DIR" >/dev/null
+	elif command -v 7z >/dev/null 2>&1; then
+		7z x -y -o"$DEST_DIR" "$ARCHIVE_PATH"
+	else
+		echo "Error: unrar or 7z is not installed" >&2
+		exit 1
+	fi
 	;;
 # Archives bellow typically contain only a single file if not archived with tar
 *.gz)
