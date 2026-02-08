@@ -15,16 +15,18 @@ KEEP_CHANGES=false
 WRITE_CONFIG=false
 CLEANUP=false
 
+UPDATE_SCRIPT_ARGS=()
+
 show_help() {
-    cat <<EOF
-Usage: ./utils.sh [OPTIONS]
+	cat <<EOF
+Usage: ./utils.sh [OPTIONS] [-- UPDATER_ARGS]
 
 Utility script for update_github_apps.py
 
 Options:
-  -k, --keep				Keep the generated files and directories
-  -c --config				Write config to updater_config.json rather than stdout
-  -h, --help				Show this help message
+  -k, --keep			Keep the generated files and directories
+  -c --config			Write config to updater_config.json rather than stdout
+  -h, --help			Show this help message
   -C, --clean, --cleanup	Cleanup generated files and directories if any
 
 Examples:
@@ -32,18 +34,24 @@ Examples:
   				Pipeing config in stdout and receiving via stdout
   ./utils.sh --keep --config
   ./utils.sh --cleanup
+  ./utils.sh -- --apps names	Pass arguments to the main updater script
 EOF
 }
 
-for arg in "$@"; do
-	case "$arg" in
+for ((i = 1; i <= $#; i++)); do
+	case "${!i}" in
 	-h | --help)
 		show_help
 		exit 0
 		;;
 	-k | --keep) KEEP_CHANGES=true ;;
 	-c | --config) WRITE_CONFIG=true ;;
-	-C |--clean | --cleanup) CLEANUP=true ;;
+	-C | --clean | --cleanup) CLEANUP=true ;;
+	--)
+		# Put the rest of the args after '--' in UPDATE_SCRIPT_ARGS and exit for loop
+		UPDATE_SCRIPT_ARGS+=("${@:$((++i))}")
+		break
+		;;
 	esac
 done
 
@@ -72,9 +80,9 @@ until curl -fs "$URL/status" >/dev/null 2>&1; do
 done
 
 if "$WRITE_CONFIG"; then
-	"$SCRIPT_DIR/update_github_apps.py" --config "$CONFIG_FILE" --mock-api "$URL"
+	"$SCRIPT_DIR/update_github_apps.py" --config "$CONFIG_FILE" --mock-api "$URL" "${UPDATE_SCRIPT_ARGS[@]}"
 else
-	cat "$SCRIPT_DIR/updater_config.json" | "$SCRIPT_DIR/update_github_apps.py" --config - --mock-api "$URL"
+	cat "$SCRIPT_DIR/updater_config.json" | "$SCRIPT_DIR/update_github_apps.py" --config - --mock-api "$URL" "${UPDATE_SCRIPT_ARGS[@]}"
 fi
 kill "$MOCK_PID"
 

@@ -31,8 +31,7 @@
       "tag": "v1.4.0",
       "asset_pattern": "^test-app-v[0-9.]+\\-linux\\.tar\\.gz$",
       "asset_match_type": "regex",
-      "install_path": "./test-downloads/test-app-linux.tar.gz",
-      "use_prerelease": false
+      "install_path": "./test-downloads/test-app-linux.tar.gz"
     },
     {
       "name": "Test App Windows (regex)",
@@ -40,8 +39,7 @@
       "tag": "v1.4.0",
       "asset_pattern": "^test-app-.*-windows\\.exe$",
       "asset_match_type": "regex",
-      "install_path": "./test-downloads/test-app-windows.exe",
-      "use_prerelease": false
+      "install_path": "./test-downloads/test-app-windows.exe"
     },
     {
       "name": "Fixed Name App (fixed)",
@@ -49,8 +47,7 @@
       "tag": "v3.2.0",
       "asset_pattern": "app-release.zip",
       "asset_match_type": "fixed",
-      "install_path": "./test-downloads/app-release.zip",
-      "use_prerelease": false
+      "install_path": "./test-downloads/app-release.zip"
     },
     {
       "name": "Tag Template App Linux (tag substitution)",
@@ -58,8 +55,7 @@
       "tag": "v2.2.5",
       "asset_pattern": "template-app-{tag}-linux.tar.gz",
       "asset_match_type": "tag",
-      "install_path": "./test-downloads/template-app-linux.tar.gz",
-      "use_prerelease": false
+      "install_path": "./test-downloads/template-app-linux.tar.gz"
     },
     {
       "name": "Tag Template App Windows (tag substitution)",
@@ -67,8 +63,7 @@
       "tag": "v2.2.5",
       "asset_pattern": "template-app-{tag}-windows.exe",
       "asset_match_type": "tag",
-      "install_path": "./test-downloads/template-app-windows.exe",
-      "use_prerelease": false
+      "install_path": "./test-downloads/template-app-windows.exe"
     }
   ]
 }
