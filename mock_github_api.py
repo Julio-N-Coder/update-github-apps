@@ -16,6 +16,7 @@ import sys
 from http.server import HTTPServer, BaseHTTPRequestHandler
 from urllib.parse import urlparse
 import argparse
+from typing import Dict
 
 
 class Colors:
@@ -26,131 +27,156 @@ class Colors:
     NC = "\033[0m"  # No Color
 
 
+MOCK_REPOS: Dict
+
+
 # Mock data for repositories
-MOCK_REPOS = {
-    "mockorg/variable-asset-app": {
-        "releases": [
-            {
-                "tag_name": "v3.2.1",
-                "name": "Variable Asset App 3.2.1",
-                "prerelease": False,
-                "assets": [
-                    {
-                        "name": "variable-asset-app-3.2.1-hotfix2.zip",
-                        "browser_download_url": "http://localhost:8080/mock-download/variable-asset-app-3.2.1-hotfix2.zip",
-                        "size": 1024000,
-                    }
-                ],
-            },
-            {
-                "tag_name": "v3.2.0",
-                "name": "Variable Asset App 3.2.0",
-                "prerelease": False,
-                "assets": [
-                    {
-                        "name": "variable-asset-app-3.2.0.zip",
-                        "browser_download_url": "http://localhost:8080/mock-download/variable-asset-app-3.2.0.zip",
-                        "size": 1020000,
-                    }
-                ],
-            },
-            {
-                "tag_name": "v3.3.0-beta.1",
-                "name": "Variable Asset App 3.3.0 Beta 1",
-                "prerelease": True,
-                "assets": [
-                    {
-                        "name": "variable-asset-app-3.3.0-beta.1.zip",
-                        "browser_download_url": "http://localhost:8080/mock-download/variable-asset-app-3.3.0-beta.1.zip",
-                        "size": 1030000,
-                    }
-                ],
-            },
-        ]
-    },
-    "test-owner/test-app": {
-        "releases": [
-            {
-                "tag_name": "v1.5.0",
-                "name": "Test App 1.5.0",
-                "prerelease": False,
-                "assets": [
-                    {
-                        "name": "test-app-v1.5.0-linux.tar.gz",
-                        "browser_download_url": "http://localhost:8080/mock-download/test-app-v1.5.0-linux.tar.gz",
-                        "size": 2048000,
-                    },
-                    {
-                        "name": "test-app-v1.5.0-windows.exe",
-                        "browser_download_url": "http://localhost:8080/mock-download/test-app-v1.5.0-windows.exe",
-                        "size": 3072000,
-                    },
-                ],
-            },
-            {
-                "tag_name": "v1.4.0",
-                "name": "Test App 1.4.0",
-                "prerelease": False,
-                "assets": [
-                    {
-                        "name": "test-app-v1.4.0-linux.tar.gz",
-                        "browser_download_url": "http://localhost:8080/mock-download/test-app-v1.4.0-linux.tar.gz",
-                        "size": 2000000,
-                    }
-                ],
-            },
-        ]
-    },
-    "another-owner/fixed-name-app": {
-        "releases": [
-            {
-                "tag_name": "v3.2.1",
-                "name": "Fixed Name App 3.2.1",
-                "prerelease": False,
-                "assets": [
-                    {
-                        "name": "app-release.zip",
-                        "browser_download_url": "http://localhost:8080/mock-download/app-release.zip",
-                        "size": 5000000,
-                    }
-                ],
-            }
-        ]
-    },
-    "mockorg/tag-template-app": {
-        "releases": [
-            {
-                "tag_name": "v2.3.0",
-                "name": "Tag Template App 2.3.0",
-                "prerelease": False,
-                "assets": [
-                    {
-                        "name": "template-app-2.3.0-linux.tar.gz",
-                        "browser_download_url": "http://localhost:8080/mock-download/template-app-2.3.0-linux.tar.gz",
-                        "size": 3500000,
-                    },
-                    {
-                        "name": "template-app-2.3.0-windows.exe",
-                        "browser_download_url": "http://localhost:8080/mock-download/template-app-2.3.0-windows.exe",
-                        "size": 4000000,
-                    },
-                ],
-            },
-            {
-                "tag_name": "v2.2.5",
-                "name": "Tag Template App 2.2.5",
-                "prerelease": False,
-                "assets": [
-                    {
-                        "name": "template-app-2.2.5-linux.tar.gz",
-                        "browser_download_url": "http://localhost:8080/mock-download/template-app-2.2.5-linux.tar.gz",
-                        "size": 3400000,
-                    }
-                ],
-            },
-        ]
-    },
-}
+def gen_mock_repos(port) -> Dict:
+    return {
+        "mockorg/variable-asset-app": {
+            "releases": [
+                {
+                    "tag_name": "v3.2.1",
+                    "name": "Variable Asset App 3.2.1",
+                    "prerelease": False,
+                    "assets": [
+                        {
+                            "name": "variable-asset-app-3.2.1-hotfix2.zip",
+                            "browser_download_url": f"http://localhost:{port}/mock-download/variable-asset-app-3.2.1-hotfix2.zip",
+                            "size": 1024000,
+                        }
+                    ],
+                },
+                {
+                    "tag_name": "v3.2.0",
+                    "name": "Variable Asset App 3.2.0",
+                    "prerelease": False,
+                    "assets": [
+                        {
+                            "name": "variable-asset-app-3.2.0.zip",
+                            "browser_download_url": f"http://localhost:{port}/mock-download/variable-asset-app-3.2.0.zip",
+                            "size": 1020000,
+                        }
+                    ],
+                },
+                {
+                    "tag_name": "v3.3.0-beta.1",
+                    "name": "Variable Asset App 3.3.0 Beta 1",
+                    "prerelease": True,
+                    "assets": [
+                        {
+                            "name": "variable-asset-app-3.3.0-beta.1.zip",
+                            "browser_download_url": f"http://localhost:{port}/mock-download/variable-asset-app-3.3.0-beta.1.zip",
+                            "size": 1030000,
+                        }
+                    ],
+                },
+            ]
+        },
+        "test-owner/test-app": {
+            "releases": [
+                {
+                    "tag_name": "v1.5.0",
+                    "name": "Test App 1.5.0",
+                    "prerelease": False,
+                    "assets": [
+                        {
+                            "name": "test-app-v1.5.0-linux.tar.gz",
+                            "browser_download_url": f"http://localhost:{port}/mock-download/test-app-v1.5.0-linux.tar.gz",
+                            "size": 2048000,
+                        },
+                        {
+                            "name": "test-app-v1.5.0-windows.exe",
+                            "browser_download_url": f"http://localhost:{port}/mock-download/test-app-v1.5.0-windows.exe",
+                            "size": 3072000,
+                        },
+                    ],
+                },
+                {
+                    "tag_name": "v1.4.0",
+                    "name": "Test App 1.4.0",
+                    "prerelease": False,
+                    "assets": [
+                        {
+                            "name": "test-app-v1.4.0-linux.tar.gz",
+                            "browser_download_url": f"http://localhost:{port}/mock-download/test-app-v1.4.0-linux.tar.gz",
+                            "size": 2000000,
+                        }
+                    ],
+                },
+            ]
+        },
+        "another-owner/fixed-name-app": {
+            "releases": [
+                {
+                    "tag_name": "v3.2.1",
+                    "name": "Fixed Name App 3.2.1",
+                    "prerelease": False,
+                    "assets": [
+                        {
+                            "name": "app-release.zip",
+                            "browser_download_url": f"http://localhost:{port}/mock-download/app-release.zip",
+                            "size": 5000000,
+                        }
+                    ],
+                }
+            ]
+        },
+        "mockorg/tag-template-app": {
+            "releases": [
+                {
+                    "tag_name": "v2.3.0",
+                    "name": "Tag Template App 2.3.0",
+                    "prerelease": False,
+                    "assets": [
+                        {
+                            "name": "template-app-2.3.0-linux.tar.gz",
+                            "browser_download_url": f"http://localhost:{port}/mock-download/template-app-2.3.0-linux.tar.gz",
+                            "size": 3500000,
+                        },
+                        {
+                            "name": "template-app-2.3.0-windows.exe",
+                            "browser_download_url": f"http://localhost:{port}/mock-download/template-app-2.3.0-windows.exe",
+                            "size": 4000000,
+                        },
+                    ],
+                },
+                {
+                    "tag_name": "v2.2.5",
+                    "name": "Tag Template App 2.2.5",
+                    "prerelease": False,
+                    "assets": [
+                        {
+                            "name": "template-app-2.2.5-linux.tar.gz",
+                            "browser_download_url": f"http://localhost:{port}/mock-download/template-app-2.2.5-linux.tar.gz",
+                            "size": 3400000,
+                        }
+                    ],
+                },
+            ]
+        },
+        "test-owner/download-all": {
+            "releases": [
+                {
+                    "tag_name": "v5.2.0",
+                    "name": "Test download all 5.2.0",
+                    "prerelease": False,
+                    "assets": [
+                        {
+                            "name": "download-all-v5.2.0-linux.tar.gz",
+                            "browser_download_url": f"http://localhost:{port}/mock-download/download-all-v5.2.0-linux.tar.gz",
+                            "size": 1024000,
+                        },
+                        {
+                            "name": "download-all-v5.2.0-asset.zip",
+                            "browser_download_url": f"http://localhost:{port}/mock-download/download-all-v5.2.0-asset.zip",
+                            "size": 1024000,
+                        },
+                    ],
+                },
+            ]
+        },
+    }
 
 
 class MockGitHubAPIHandler(BaseHTTPRequestHandler):
@@ -308,6 +334,8 @@ Edit the MOCK_REPOS dictionary in this file to add your own test repositories.
     )
 
     args = parser.parse_args()
+    global MOCK_REPOS
+    MOCK_REPOS = gen_mock_repos(args.port)
 
     try:
         run_server(args.port)
