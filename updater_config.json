@@ -64,6 +64,13 @@
       "asset_pattern": "template-app-{tag}-windows.exe",
       "asset_match_type": "tag",
       "install_path": "./test-downloads/template-app-windows.exe"
+    },
+    {
+      "name": "Download All Assets",
+      "repo": "test-owner/download-all",
+      "tag": "v5.1.0",
+      "asset_match_type": "all",
+      "install_path": "./test-downloads/"
     }
   ]
 }

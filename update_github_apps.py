@@ -23,7 +23,7 @@ import urllib.request
 import urllib.error
 from datetime import datetime
 from pathlib import Path, PurePath
-from typing import Dict, Optional
+from typing import Dict, Optional, List
 import atexit
 
 
@@ -275,9 +275,9 @@ Examples of asset_match_type:
             url = f"{self.api_base_url}/repos/{repo}/releases/latest"
             return self.github_api_request(url)
 
-    def find_asset(
+    def find_assets(
         self, release: Dict, pattern: str, match_type: str, tag: str = ""
-    ) -> Optional[Dict]:
+    ) -> Optional[List[Dict]]:
         """
         Find a matching asset in a release.
 
@@ -296,16 +296,19 @@ Examples of asset_match_type:
             log_error("No assets found in release")
             return None
 
+        if match_type == "all":
+            return assets
+
         for asset in assets:
             asset_name = asset.get("name", "")
 
             if match_type == "fixed":
                 if asset_name == pattern:
-                    return asset
+                    return [asset]
             elif match_type == "regex":
                 try:
                     if re.match(pattern, asset_name):
-                        return asset
+                        return [asset]
                 except re.error as e:
                     log_error(f"Invalid regex pattern '{pattern}': {e}")
                     return None
@@ -322,7 +325,7 @@ Examples of asset_match_type:
                 ]
 
                 if asset_name in expected_names:
-                    return asset
+                    return [asset]
             else:
                 log_error(f"Unknown match_type: {match_type}")
                 return None
@@ -503,8 +506,12 @@ Examples of asset_match_type:
         install_path_str = app.get("install_path")
         use_prerelease = app.get("use_prerelease", False)
 
-        # Validate required fields
-        if not all([repo, asset_pattern, install_path_str]):
+        # Validate fields
+        # asset_pattern == None if asset_match_type is all
+        if match_type == "all" and not all([repo, install_path_str]):
+            log_error(f"App '{name}' is missing required fields")
+            return False
+        elif match_type != "all" and not all([repo, asset_pattern, install_path_str]):
             log_error(f"App '{name}' is missing required fields")
             return False
 
@@ -547,53 +554,58 @@ Examples of asset_match_type:
                 log_success("File exists, no action needed")
 
         if needs_download:
-            # Find matching asset
-            asset = self.find_asset(
+            # Find matching assets
+            assets = self.find_assets(
                 latest_release, asset_pattern, match_type, latest_tag
             )
 
-            if not asset:
+            if not assets:
                 log_error(
-                    f"No matching asset found for pattern '{asset_pattern}' (type: {match_type})"
+                    f"No matching assets found for pattern '{asset_pattern}' (type: {match_type})"
                 )
                 return False
 
-            asset_name = asset.get("name")
-            download_url = asset.get("browser_download_url")
+            for asset in assets:
+                asset_name: str = asset.get("name")
+                download_url: str = asset.get("browser_download_url")
 
-            if not download_url:
-                log_error("Asset has no download URL")
-                return False
+                if not download_url:
+                    log_error("Asset has no download URL")
+                    continue
 
-            log_info(f"Matched asset: {asset_name}")
+                log_info(f"Matched asset: {asset_name}")
 
-            # Move old version to trash if it exists and if updating
-            if is_update and install_path.exists():
-                if not self.move_to_trash(install_path, current_tag):
-                    log_warning(
-                        "Failed to move old version to trash, continuing anyway..."
-                    )
+                # install_path for match_type "all", is a directory
+                output_path = install_path
+                if match_type == "all":
+                    output_path = output_path / asset_name
 
-            # Download new version
-            if self.download_file(download_url, install_path):
-                # Update config with new tag
-                app["tag"] = latest_tag
+                # Move old version to trash if it exists and if updating
+                if is_update and output_path.exists():
+                    if not self.move_to_trash(output_path, current_tag):
+                        log_warning(
+                            "Failed to move old version to trash, continuing anyway..."
+                        )
 
-                if is_update:
-                    log_success(f"{name} updated from {current_tag} to {latest_tag}")
+                # Download new version
+                if self.download_file(download_url, output_path):
+                    # Update config with new tag
+                    app["tag"] = latest_tag
+
+                    if is_update:
+                        log_success(
+                            f"{name} updated from {current_tag} to {latest_tag}"
+                        )
+                    else:
+                        log_success(f"{name} downloaded (version {latest_tag})")
+
+                    post_hook = app.get("post_download_hook")
+                    if post_hook:
+                        self.run_post_download_hook(
+                            post_hook, app, output_path, asset_name, latest_tag
+                        )
                 else:
-                    log_success(f"{name} downloaded (version {latest_tag})")
-
-                post_hook = app.get("post_download_hook")
-                if post_hook:
-                    self.run_post_download_hook(
-                        post_hook, app, install_path, asset_name, latest_tag
-                    )
-
-                return True
-            else:
-                log_error(f"Failed to download {name}")
-                return False
+                    log_error(f"Failed to download {name}")
 
         return True
 
