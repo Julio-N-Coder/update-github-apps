@@ -47,7 +47,8 @@
       "tag": "v3.2.0",
       "asset_pattern": "app-release.zip",
       "asset_match_type": "fixed",
-      "install_path": "./test-downloads/app-release.zip"
+      "install_path": "./test-downloads/app-release.zip",
+      "install_path_match_type": "fixed"
     },
     {
       "name": "Tag Template App Linux (tag substitution)",
@@ -55,7 +56,8 @@
       "tag": "v2.2.5",
       "asset_pattern": "template-app-{tag}-linux.tar.gz",
       "asset_match_type": "tag",
-      "install_path": "./test-downloads/template-app-linux.tar.gz"
+      "install_path": "./test-downloads/template-app-{tag}-linux.tar.gz",
+      "install_path_match_type": "tag"
     },
     {
       "name": "Tag Template App Windows (tag substitution)",
@@ -63,7 +65,8 @@
       "tag": "v2.2.5",
       "asset_pattern": "template-app-{tag}-windows.exe",
       "asset_match_type": "tag",
-      "install_path": "./test-downloads/template-app-windows.exe"
+      "install_path": "./test-downloads/",
+      "install_path_match_type": "asset_name"
     },
     {
       "name": "Download All Assets",

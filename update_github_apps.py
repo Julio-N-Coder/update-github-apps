@@ -23,7 +23,7 @@ import urllib.request
 import urllib.error
 from datetime import datetime
 from pathlib import Path, PurePath
-from typing import Dict, Optional, List
+from typing import Dict, Optional, List, Tuple
 import atexit
 
 
@@ -275,6 +275,33 @@ Examples of asset_match_type:
             url = f"{self.api_base_url}/repos/{repo}/releases/latest"
             return self.github_api_request(url)
 
+    def replace_tag(self, string_with_tag: str, tag: str) -> Tuple:
+        """
+        Replace literal "{tag}" in a string with the actual tag
+
+        Args:
+            string_with_tag: String with "{tag}"
+            tag: The release tag
+
+        Returns:
+            Tuple of size 3 of strings.
+
+            First, Tag as is
+
+            Second without v prefix
+
+            Third with v prefix
+        """
+        tag_clean = tag.lstrip("v")
+        tag_with_v = tag if tag.startswith("v") else f"v{tag}"
+
+        # Multiple substitutions to handle different tag formats
+        return (
+            string_with_tag.replace("{tag}", tag),
+            string_with_tag.replace("{tag}", tag_clean),
+            string_with_tag.replace("{tag}", tag_with_v),
+        )
+
     def find_assets(
         self, release: Dict, pattern: str, match_type: str, tag: str = ""
     ) -> Optional[List[Dict]]:
@@ -313,18 +340,7 @@ Examples of asset_match_type:
                     log_error(f"Invalid regex pattern '{pattern}': {e}")
                     return None
             elif match_type == "tag":
-                # replace {tag} with the actual tag
-                tag_clean = tag.lstrip("v")
-                tag_with_v = tag if tag.startswith("v") else f"v{tag}"
-
-                # Try multiple substitutions to handle different tag formats
-                expected_names = [
-                    pattern.replace("{tag}", tag),
-                    pattern.replace("{tag}", tag_clean),  # Without 'v' prefix
-                    pattern.replace("{tag}", tag_with_v),  # With 'v' prefix
-                ]
-
-                if asset_name in expected_names:
+                if asset_name in self.replace_tag(pattern, tag):
                     return [asset]
             else:
                 log_error(f"Unknown match_type: {match_type}")
@@ -495,7 +511,7 @@ Examples of asset_match_type:
         Returns:
             True if successful or no update needed, False on error
         """
-        app = self.config_data["apps"][app_index]
+        app: Dict = self.config_data["apps"][app_index]
 
         # Get app configuration
         name = app.get("name", "Unknown")
@@ -505,6 +521,7 @@ Examples of asset_match_type:
         match_type = app.get("asset_match_type", "fixed")
         install_path_str = app.get("install_path")
         use_prerelease = app.get("use_prerelease", False)
+        install_path_match_type: str = app.get("install_path_match_type", "fixed")
 
         # Validate fields
         # asset_pattern == None if asset_match_type is all
@@ -575,14 +592,29 @@ Examples of asset_match_type:
 
                 log_info(f"Matched asset: {asset_name}")
 
-                # install_path for match_type "all", is a directory
+                # Handle output_path and prev_file_path
                 output_path = install_path
-                if match_type == "all":
+                prev_file_path = install_path
+                if match_type == "all" or install_path_match_type == "asset_name":
+                    # Install_path is a directory here
                     output_path = output_path / asset_name
+                    prev_file_path = prev_file_path / asset_name
+                elif install_path_match_type == "tag":
+                    # Use previous tag to move old file
+                    prev_file_path = (
+                        output_path.parent
+                        / self.replace_tag(str(output_path.name), current_tag)[0]
+                    )
+                    output_path = (
+                        output_path.parent
+                        / self.replace_tag(str(output_path.name), latest_tag)[0]
+                    )
 
                 # Move old version to trash if it exists and if updating
-                if is_update and output_path.exists():
-                    if not self.move_to_trash(output_path, current_tag):
+                # If install_path_match_type == "asset_name" or asset_match_type == "all":
+                #   Can't move old file to trash since we don't know the old file name
+                if is_update and prev_file_path.exists():
+                    if not self.move_to_trash(prev_file_path, current_tag):
                         log_warning(
                             "Failed to move old version to trash, continuing anyway..."
                         )
