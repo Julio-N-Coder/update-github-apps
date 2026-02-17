@@ -36,30 +36,6 @@ def gen_mock_repos(port) -> Dict:
         "mockorg/variable-asset-app": {
             "releases": [
                 {
-                    "tag_name": "v3.2.1",
-                    "name": "Variable Asset App 3.2.1",
-                    "prerelease": False,
-                    "assets": [
-                        {
-                            "name": "variable-asset-app-3.2.1-hotfix2.zip",
-                            "browser_download_url": f"http://localhost:{port}/mock-download/variable-asset-app-3.2.1-hotfix2.zip",
-                            "size": 1024000,
-                        }
-                    ],
-                },
-                {
-                    "tag_name": "v3.2.0",
-                    "name": "Variable Asset App 3.2.0",
-                    "prerelease": False,
-                    "assets": [
-                        {
-                            "name": "variable-asset-app-3.2.0.zip",
-                            "browser_download_url": f"http://localhost:{port}/mock-download/variable-asset-app-3.2.0.zip",
-                            "size": 1020000,
-                        }
-                    ],
-                },
-                {
                     "tag_name": "v3.3.0-beta.1",
                     "name": "Variable Asset App 3.3.0 Beta 1",
                     "prerelease": True,
@@ -71,36 +47,15 @@ def gen_mock_repos(port) -> Dict:
                         }
                     ],
                 },
-            ]
-        },
-        "test-owner/test-app": {
-            "releases": [
                 {
-                    "tag_name": "v1.5.0",
-                    "name": "Test App 1.5.0",
+                    "tag_name": "v3.2.1",
+                    "name": "Variable Asset App 3.2.1",
                     "prerelease": False,
                     "assets": [
                         {
-                            "name": "test-app-v1.5.0-linux.tar.gz",
-                            "browser_download_url": f"http://localhost:{port}/mock-download/test-app-v1.5.0-linux.tar.gz",
-                            "size": 2048000,
-                        },
-                        {
-                            "name": "test-app-v1.5.0-windows.exe",
-                            "browser_download_url": f"http://localhost:{port}/mock-download/test-app-v1.5.0-windows.exe",
-                            "size": 3072000,
-                        },
-                    ],
-                },
-                {
-                    "tag_name": "v1.4.0",
-                    "name": "Test App 1.4.0",
-                    "prerelease": False,
-                    "assets": [
-                        {
-                            "name": "test-app-v1.4.0-linux.tar.gz",
-                            "browser_download_url": f"http://localhost:{port}/mock-download/test-app-v1.4.0-linux.tar.gz",
-                            "size": 2000000,
+                            "name": "variable-asset-app-3.2.1-hotfix2.zip",
+                            "browser_download_url": f"http://localhost:{port}/mock-download/variable-asset-app-3.2.1-hotfix2.zip",
+                            "size": 1024000,
                         }
                     ],
                 },
@@ -140,19 +95,7 @@ def gen_mock_repos(port) -> Dict:
                             "size": 4000000,
                         },
                     ],
-                },
-                {
-                    "tag_name": "v2.2.5",
-                    "name": "Tag Template App 2.2.5",
-                    "prerelease": False,
-                    "assets": [
-                        {
-                            "name": "template-app-2.2.5-linux.tar.gz",
-                            "browser_download_url": f"http://localhost:{port}/mock-download/template-app-2.2.5-linux.tar.gz",
-                            "size": 3400000,
-                        }
-                    ],
-                },
+                }
             ]
         },
         "test-owner/download-all": {
@@ -173,7 +116,7 @@ def gen_mock_repos(port) -> Dict:
                             "size": 1024000,
                         },
                     ],
-                },
+                }
             ]
         },
     }

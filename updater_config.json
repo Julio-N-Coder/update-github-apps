@@ -26,22 +26,6 @@
       "use_prerelease": true
     },
     {
-      "name": "Test App Linux (regex)",
-      "repo": "test-owner/test-app",
-      "tag": "v1.4.0",
-      "asset_pattern": "^test-app-v[0-9.]+\\-linux\\.tar\\.gz$",
-      "asset_match_type": "regex",
-      "install_path": "./test-downloads/test-app-linux.tar.gz"
-    },
-    {
-      "name": "Test App Windows (regex)",
-      "repo": "test-owner/test-app",
-      "tag": "v1.4.0",
-      "asset_pattern": "^test-app-.*-windows\\.exe$",
-      "asset_match_type": "regex",
-      "install_path": "./test-downloads/test-app-windows.exe"
-    },
-    {
       "name": "Fixed Name App (fixed)",
       "repo": "another-owner/fixed-name-app",
       "tag": "v3.2.0",
