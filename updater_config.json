@@ -13,7 +13,7 @@
       "asset_match_type": "regex",
       "install_path": "./test-downloads/variable-asset-app.zip",
       "use_prerelease": false,
-      "post_download_hook": "./hooks/test_hook.sh",
+      "post_download_hook": "./hooks/post_download_hook.sh",
       "post_download_hook_args": ["--arg1", "--arg2"]
     },
     {
