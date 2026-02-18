@@ -58,6 +58,14 @@
       "tag": "v5.1.0",
       "asset_match_type": "all",
       "install_path": "./test-downloads/"
+    },
+    {
+      "name": "Find Assets Hook",
+      "repo": "test-owner/find-assets-hook",
+      "tag": "v1.4.0",
+      "find_assets_hook": "./hooks/find_assets_hook.py",
+      "find_assets_hook_args": ["--arg1", "--arg2"],
+      "install_path": "./test-downloads/"
     }
   ]
 }

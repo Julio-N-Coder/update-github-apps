@@ -501,6 +501,94 @@ Examples of asset_match_type:
             log_error(f"Error running post-download hook: {e}")
             return False
 
+    def run_find_assets_hook(
+        self, hook_command: str, app_data: Dict, release: Dict, install_path: Path
+    ) -> Optional[List[Dict]]:
+        """
+        Run a hook to filter for specific assets.
+
+        Args:
+            hook_command: Command to execute
+            app_data: App configuration dictionary
+            release: Release information dictionary with assets
+            install_path: Path to Installation Directory
+
+        Returns:
+            List of assets if successful, None otherwise
+        """
+        # if relative resolve it
+        hook_path = Path(hook_command)
+        if not hook_path.is_absolute() and hook_path.exists():
+            resolved_hook = self.base_dir / hook_path
+            if resolved_hook.exists():
+                hook_command = str(resolved_hook.resolve())
+
+        # Prepare environment variables for the hook
+        hook_env = os.environ.copy()
+        hook_env.update(
+            {
+                "UPDATER_APP_NAME": app_data.get("name", ""),
+                "UPDATER_REPO": app_data.get("repo", ""),
+                "UPDATER_CURRENT_TAG": app_data.get("tag", ""),
+                "UPDATER_LATEST_TAG": release.get("tag_name", ""),
+                "UPDATER_INSTALL_DIR": install_path,
+                "UPDATER_CONFIG_DIR": str(self.base_dir.resolve()),
+            }
+        )
+
+        log_info(f"Running find assets hook: {hook_command}")
+
+        assets = release.get("assets", [])
+        asset_names = [asset["name"] for asset in assets]
+
+        try:
+            # Run the hook command with optional args
+            hook_list: list = app_data.get("find_assets_hook_args", [])
+            hook_list.insert(0, hook_command)
+
+            result = subprocess.run(
+                hook_list,
+                input=json.dumps(
+                    asset_names
+                ),  # Passing a json string list of asset names to stdin
+                env=hook_env,
+                capture_output=True,
+                text=True,
+                timeout=300,  # 5 minute timeout
+                cwd=str(self.base_dir),
+            )
+
+            if result.stderr:
+                print(result.stderr, end="", file=sys.stderr)
+
+            if result.returncode == 0 and result.stdout:
+                # Everything but the last line is printed to stdout
+                split_stdout = result.stdout.split("\n")
+                print("\n".join(split_stdout[:-1]))
+
+                # Last line Should be a json string list of asset names
+                filtered_asset_names = json.loads(split_stdout[-1])
+                if type(filtered_asset_names) == list:
+                    log_success("Find-assets hook completed successfully")
+                    return [
+                        asset
+                        for asset in assets
+                        if asset["name"] in filtered_asset_names
+                    ]
+                else:
+                    log_error("Find-assets hook did not return a json string list")
+                    return False
+            else:
+                log_error(f"Find-assets hook failed with exit code {result.returncode}")
+                return False
+
+        except subprocess.TimeoutExpired:
+            log_error("Find-assets hook timed out (5 minute limit)")
+            return False
+        except Exception as e:
+            log_error(f"Error running find-assets hook: {e}")
+            return False
+
     def update_app(self, app_index: int) -> bool:
         """
         Check and update a single app.
@@ -522,13 +610,18 @@ Examples of asset_match_type:
         install_path_str = app.get("install_path")
         use_prerelease = app.get("use_prerelease", False)
         install_path_match_type: str = app.get("install_path_match_type", "fixed")
+        find_assets_hook = app.get("find_assets_hook")
 
         # Validate fields
-        # asset_pattern == None if asset_match_type is all
-        if match_type == "all" and not all([repo, install_path_str]):
+        # only "repo" and "install_path_str" are required with match_type == "all" or find_assets_hook
+        if (match_type == "all" or find_assets_hook) and not all(
+            [repo, install_path_str]
+        ):
             log_error(f"App '{name}' is missing required fields")
             return False
-        elif match_type != "all" and not all([repo, asset_pattern, install_path_str]):
+        elif (match_type != "all" and not find_assets_hook) and not all(
+            [repo, asset_pattern, install_path_str]
+        ):
             log_error(f"App '{name}' is missing required fields")
             return False
 
@@ -572,9 +665,14 @@ Examples of asset_match_type:
 
         if needs_download:
             # Find matching assets
-            assets = self.find_assets(
-                latest_release, asset_pattern, match_type, latest_tag
-            )
+            if find_assets_hook:
+                assets = self.run_find_assets_hook(
+                    find_assets_hook, app, latest_release, install_path
+                )
+            else:
+                assets = self.find_assets(
+                    latest_release, asset_pattern, match_type, latest_tag
+                )
 
             if not assets:
                 log_error(
@@ -595,7 +693,11 @@ Examples of asset_match_type:
                 # Handle output_path and prev_file_path
                 output_path = install_path
                 prev_file_path = install_path
-                if match_type == "all" or install_path_match_type == "asset_name":
+                if (
+                    match_type == "all"
+                    or install_path_match_type == "asset_name"
+                    or find_assets_hook
+                ):
                     # Install_path is a directory here
                     output_path = output_path / asset_name
                     prev_file_path = prev_file_path / asset_name
@@ -611,7 +713,7 @@ Examples of asset_match_type:
                     )
 
                 # Move old version to trash if it exists and if updating
-                # If install_path_match_type == "asset_name" or asset_match_type == "all":
+                # If install_path_match_type == "asset_name" or asset_match_type == "all" or find_assets_hook:
                 #   Can't move old file to trash since we don't know the old file name
                 if is_update and prev_file_path.exists():
                     if not self.move_to_trash(prev_file_path, current_tag):

@@ -119,6 +119,27 @@ def gen_mock_repos(port) -> Dict:
                 }
             ]
         },
+        "test-owner/find-assets-hook": {
+            "releases": [
+                {
+                    "tag_name": "v1.5.0",
+                    "name": "Find Assets Hook 1.5.0",
+                    "prerelease": False,
+                    "assets": [
+                        {
+                            "name": "find-assets-hook-v1.5.0.tar.gz",
+                            "browser_download_url": f"http://localhost:{port}/mock-download/find-assets-hook-v1.5.0.tar.gz",
+                            "size": 1024000,
+                        },
+                        {
+                            "name": "find-assets-hook-v1.5.0.zip",
+                            "browser_download_url": f"http://localhost:{port}/mock-download/find-assets-hook-v1.5.0.zip",
+                            "size": 1024000,
+                        },
+                    ],
+                },
+            ]
+        },
     }
 
 
