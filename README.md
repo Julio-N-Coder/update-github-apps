@@ -5,13 +5,13 @@ A Python script to automatically check and update applications from GitHub relea
 ## Features
 
 - **No external dependencies** - Uses only Python standard library
-- **Flexible asset matching** - Fixed names, regex patterns, or tag templates
+- **Flexible asset matching** - Fixed names, regex patterns, tag templates, or all assets
 - **Pre-release support** - Choose between stable or pre-release versions
 - **GitHub authentication** - Optional token for higher rate limits or private repos
 - **Old version management** - Automatically moves old versions to a trash directory
 - **Auto-config updates** - Keeps track of current versions in the config file
 - **Re-download missing files** - Even if the tag hasn't changed
-- **Post-download hooks** - Run custom scripts with arguments after downloads
+- **hooks** - Run custom scripts with arguments for custom functionality
 
 ## Requirements
 
@@ -19,8 +19,7 @@ A Python script to automatically check and update applications from GitHub relea
 
 ## Usage
 
-The script is designed to be reusable.
-Simply download update_github_apps.py and use it with multiple config files:
+Simply download update_github_apps.py and use it with any config file:
 
 **Step 1: Download**
 
@@ -37,11 +36,16 @@ cd /path/to/script_dir
 chmod +x update_github_apps.py
 # By Default it looks for updater_config.json config file in the current working directory
 ./update_github_apps.py
+
+# Run for only specific assets specified by the name or repo
+./update_github_apps.py --apps "App Name" --repos "owner/repo"
 ```
 
 ## Configuration
 
-Create a `updater_config.json` file in a directory:
+Create a `updater_config.json` file in a directory
+
+### Example config file
 
 ```json
 {
@@ -58,10 +62,19 @@ Create a `updater_config.json` file in a directory:
       "tag": "current_tag",
       "asset_pattern": "filename.zip",
       "asset_match_type": "fixed",
-      "install_path": "./path/filename.zip",
+      "install_path": "./downloads-dir/filename-{tag}.zip",
+      "install_path_match_type": "tag",
       "use_prerelease": false,
-      "post_download_hook": "./hooks/test_hook.sh",
+      "post_download_hook": "./hooks/post_download_hook.sh",
       "post_download_hook_args": ["--arg1", "--arg2"]
+    },
+    {
+      "name": "Find Assets Hook",
+      "repo": "test-owner/find-assets-hook",
+      "tag": "v1.4.0",
+      "find_assets_hook": "./hooks/find_assets_hook.py",
+      "find_assets_hook_args": ["--arg1", "--arg2"],
+      "install_path": "./downloads-dir/"
     }
   ]
 }
@@ -82,19 +95,30 @@ Create a `updater_config.json` file in a directory:
 
 ### Configuration Fields
 
-| Field                     | Required | Description                                                                    |
-| ------------------------- | -------- | ------------------------------------------------------------------------------ |
-| `trash_config`            | No       | trash configuration for old versions (defaults path to ".trash")               |
-| `github_token`            | No       | GitHub personal access token for authentication                                |
-| `name`                    | Yes      | Display name for the app                                                       |
-| `repo`                    | Yes      | GitHub repository in format "owner/repo"                                       |
-| `tag`                     | Yes      | Current installed tag/version (can be empty string for new apps)               |
-| `asset_pattern`           | Yes      | Fixed filename, regex pattern, or template with `{tag}` placeholder            |
-| `asset_match_type`        | Yes      | `"fixed"` for exact match, `"regex"` for pattern, `"tag"` for tag substitution |
-| `install_path`            | Yes      | Where to save the file                                                         |
-| `use_prerelease`          | No       | `true` to check pre-releases, `false` for stable only (default: `false`)       |
-| `post_download_hook`      | No       | Command or script to run after successful download                             |
-| `post_download_hook_args` | No       | Argumentst to pass to the post download hook                                   |
+| Field                     | Required | Description                                                                                |
+| ------------------------- | -------- | ------------------------------------------------------------------------------------------ |
+| `trash_config`            | No       | trash configuration for old versions (defaults path to ".trash")                           |
+| `github_token`            | No       | GitHub personal access token for authentication                                            |
+| `name`                    | Yes      | Display name for the app                                                                   |
+| `repo`                    | Yes      | GitHub repository in format "owner/repo"                                                   |
+| `tag`                     | Yes      | Current installed tag/version (can be empty string for new apps)                           |
+| `asset_pattern`           | Depends  | File name pattern for asset_match_type                                                     |
+| `asset_match_type`        | Depends  | `"fixed"` for exact match, `"regex"`, `"tag"` for tag substitution, `"all"` for all assets |
+| `install_path`            | Yes      | Where to save the file                                                                     |
+| `install_path_match_type` | No       | Dynamic file output naming. Only `"tag"` for tag substitution for now                      |
+| `use_prerelease`          | No       | `true` to check pre-releases, `false` for stable only (default: `false`)                   |
+| `post_download_hook`      | No       | Command or script to run after successful download                                         |
+| `post_download_hook_args` | No       | Argumentst to pass to the post download hook                                               |
+| `find_assets_hook`        | No       | Command or script to run to filter/process asset names                                     |
+| `find_assets_hook_args`   | No       | Argumentst to pass to the find assets hook                                                 |
+
+### Configuration through stdin
+
+Configuration can also be passed through **stdin** by passing `--config -` to the updater script. The updated configuration is piped to the updater scripts stdout and is on the last line of stdout. The following command shows an example of how this can be used.
+
+```bash
+cat updater_config.json | ./update_github_apps.py --config - --mock-api http://localhost:8080 | tail -n 1 | jq
+```
 
 ## Asset Match Types
 
@@ -152,21 +176,43 @@ Matches: `myapp-v1.2.3-linux.tar.gz` ✓
 Matches: `myapp-v2.0.0-linux.tar.gz` ✓  
 Doesn't match: `myapp-v1.2-windows.exe` ✗
 
-## Post-Download Hooks
+### 4. Match All (`"asset_match_type": "all"`)
 
-Post-download hooks allow you to run custom scripts after a file is successfully downloaded. This is useful for:
+Match all assets. Downloaded files are named after the asset names from github and `install_path` should point to a directory.
 
-- Extracting archives (zip, tar.gz, etc.)
+**Use when:** You want to download all assets in a release.
+
+```json
+{
+  "asset_match_type": "all",
+  "install_path": "./downloads-dir/"
+}
+```
+
+## Hooks
+
+## Post-Download Hook
+
+The Post-download hook allow you to run custom scripts after a file is successfully downloaded. This is useful for:
+
 - Moving files to specific locations
 - Running installation scripts
+- Extracting archives (zip, tar.gz, etc.)
+- Custom file naming
 - Sending notifications
 - Custom post-processing
+
+## Find Assets Hook
+
+The Find Assets Hook allows you to filter and process the asset names from the github repo. A json string array of asset names is passed to the hook through stdin and the hook should return a json string array of the asset names to download through it's stdout. The json string array is grabbed from the last line of the hooks stdout. All other lines in stdout are piped/printed to updaters stdin which is typically just the terminal. This is useful for:
+
+- Custom Asset Filtering
 
 ### Hook Execution
 
 Hooks are executed with:
 
-- Shell environment variables containing download information
+- Shell environment variables containing information
 - Working directory = script directory
 - 5 minute timeout
 - Output printed to terminal
